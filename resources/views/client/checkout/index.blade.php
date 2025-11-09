@@ -14,19 +14,22 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label">Họ tên người nhận <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="customer_name" required placeholder="VD: Nguyễn Văn A">
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="customer_phone" required placeholder="VD: 0987654321">
+                                <label class="form-label">Họ tên người nhận <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="customer_name" required
+                                    value="{{ old('customer_name', $user->name ?? '') }}" placeholder="VD: Nguyễn Văn A">
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email (Tùy chọn)</label>
-                                <input type="email" class="form-control" name="customer_email" placeholder="Để nhận thông báo đơn hàng">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="customer_phone" required
+                                        value="{{ old('customer_phone', $user->phone ?? '') }}" placeholder="VD: 0987654321">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email (Tùy chọn)</label>
+                                    <input type="email" class="form-control" name="customer_email"
+                                        value="{{ old('customer_email', $user->email ?? '') }}" placeholder="Để nhận thông báo đơn hàng">
+                                </div>
                             </div>
-                        </div>
                         <div class="mb-3">
                             <label class="form-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
                             <textarea class="form-control" name="shipping_address" rows="3" required placeholder="VD: Số 123, Đường ABC, Quận XYZ, TP.HCM"></textarea>

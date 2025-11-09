@@ -13,7 +13,7 @@
         .sidebar-sticky { position: relative; top: 0; height: calc(100vh - 48px); padding-top: .5rem; overflow-x: hidden; overflow-y: auto; }
         .sidebar .nav-link { font-weight: 500; color: #333; }
         .sidebar .nav-link .feather { margin-right: 4px; color: #999; }
-        .sidebar .nav-link.active { color: #007bff; }
+        .sidebar .nav-link.active { color: #0d6efd; }
         .sidebar .nav-link:hover .feather, .sidebar .nav-link.active .feather { color: inherit; }
         .sidebar-heading { font-size: .75rem; text-transform: uppercase; }
         /* Navbar */
@@ -22,18 +22,24 @@
         .navbar .form-control { padding: .75rem 1rem; border-width: 0; border-radius: 0; }
         .form-control-dark { color: #fff; background-color: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .1); }
         .form-control-dark:focus { border-color: transparent; box-shadow: 0 0 0 3px rgba(255, 255, 255, .25); }
+        /* Logout button style */
+        .btn-logout { border: none; background: none; color: rgba(255,255,255,.55); padding: .5rem 1rem; }
+        .btn-logout:hover { color: rgba(255,255,255,.75); }
     </style>
 </head>
 <body>
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">Admin Computer Shop</a>
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{{ route('admin.dashboard') }}">Admin Computer Shop</a>
         <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <input class="form-control form-control-dark w-100" type="text" placeholder="Tìm kiếm" aria-label="Search">
         <div class="navbar-nav">
             <div class="nav-item text-nowrap">
-                <a class="nav-link px-3" href="#">Đăng xuất</a>
+                <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="nav-link px-3 btn-logout">Đăng xuất</button>
+                </form>
             </div>
         </div>
     </header>
@@ -44,33 +50,51 @@
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="#">
+                            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" aria-current="page" href="{{ route('admin.dashboard') }}">
                                 <span data-feather="home"></span>
                                 Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('admin.categories.index') }}">
-                                <span data-feather="file"></span>
+                            <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">
+                                <span data-feather="list"></span>
                                 Danh mục
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {{ request()->routeIs('admin.brands.*') ? 'active' : '' }}" href="{{ route('admin.brands.index') }}">
+                                <span data-feather="tag"></span>
+                                Thương hiệu
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}" href="{{ route('admin.products.index') }}">
                                 <span data-feather="shopping-cart"></span>
                                 Sản phẩm
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}">
+                                <span data-feather="file-text"></span>
+                                Đơn hàng
+                            </a>
+                        </li>
+                         <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.customers.*') ? 'active' : '' }}" href="{{ route('admin.customers.index') }}">
                                 <span data-feather="users"></span>
                                 Khách hàng
                             </a>
                         </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Truy cập nhanh</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <span data-feather="bar-chart-2"></span>
-                                Đơn hàng
+                            <a class="nav-link" href="{{ route('home') }}" target="_blank">
+                                <span data-feather="external-link"></span>
+                                Xem trang web
                             </a>
                         </li>
                     </ul>
@@ -79,14 +103,16 @@
 
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 @if(session('success'))
-                    <div class="alert alert-success mt-3">
+                    <div class="alert alert-success mt-3 alert-dismissible fade show" role="alert">
                         {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
                 @if(session('error'))
-                    <div class="alert alert-danger mt-3">
+                    <div class="alert alert-danger mt-3 alert-dismissible fade show" role="alert">
                         {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 

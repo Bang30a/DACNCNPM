@@ -21,6 +21,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',   // <-- ĐÃ THÊM
+        'address', // <-- ĐÃ THÊM
+        'role',    // <-- ĐÃ THÊM
     ];
 
     /**
@@ -44,5 +47,11 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    
+    // Quan hệ: Một User có nhiều đơn hàng
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 }

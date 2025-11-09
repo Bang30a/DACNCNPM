@@ -11,19 +11,22 @@ use Illuminate\Support\Facades\DB; // Để dùng transaction
 class OrderController extends Controller
 {
     public function index()
-    {
-        $cart = session()->get('cart', []);
-        if (count($cart) == 0) {
-            return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống!');
-        }
-
-        $total = 0;
-        foreach ($cart as $item) {
-            $total += $item['price'] * $item['quantity'];
-        }
-
-        return view('client.checkout.index', compact('cart', 'total'));
+{
+    $cart = session()->get('cart', []);
+    if (count($cart) == 0) {
+        return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống!');
     }
+
+    $total = 0;
+    foreach ($cart as $item) {
+        $total += $item['price'] * $item['quantity'];
+    }
+
+    // Lấy thông tin người dùng đang đăng nhập để điền sẵn vào form
+    $user = auth()->user();
+
+    return view('client.checkout.index', compact('cart', 'total', 'user'));
+}
 
     public function store(Request $request)
     {
@@ -45,7 +48,7 @@ class OrderController extends Controller
 
             // 1. Tạo đơn hàng
             $order = Order::create([
-                'user_id' => auth()->id() ?? null, // Nếu đã đăng nhập thì lưu id, không thì null
+                'user_id' => auth()->id(), 
                 'customer_name' => $request->customer_name,
                 'customer_phone' => $request->customer_phone,
                 'customer_email' => $request->customer_email,
@@ -79,7 +82,25 @@ class OrderController extends Controller
             return redirect()->back()->with('error', 'Có lỗi xảy ra khi đặt hàng, vui lòng thử lại.');
         }
     }
+    // Xem lịch sử đơn hàng
+    public function history()
+    {
+        // Lấy danh sách đơn hàng của user đang đăng nhập, sắp xếp mới nhất lên đầu
+        $orders = auth()->user()->orders()->orderBy('created_at', 'desc')->paginate(10);
+        return view('client.orders.index', compact('orders'));
+    }
 
+    // Xem chi tiết một đơn hàng
+    public function detail($id)
+    {
+        // Tìm đơn hàng theo ID và đảm bảo nó thuộc về user đang đăng nhập
+        $order = Order::where('id', $id)
+                    ->where('user_id', auth()->id())
+                    ->with('details')
+                    ->firstOrFail();
+
+        return view('client.orders.show', compact('order'));
+    }
     public function success()
     {
         return view('client.checkout.success');

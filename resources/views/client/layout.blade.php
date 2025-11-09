@@ -56,8 +56,12 @@
                     <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">Trang quản trị</a></li>
                     <li><hr class="dropdown-divider"></li>
                 @endif
-                <li><a class="dropdown-item" href="#">Đơn hàng của tôi</a></li>
-                <li><a class="dropdown-item" href="#">Tài khoản</a></li>
+                <li>
+                    <a class="dropdown-item" href="{{ route('client.orders.index') }}">Đơn hàng của tôi</a>
+                </li>                
+                <li>
+                    <a class="dropdown-item" href="{{ route('client.account.index') }}">Tài khoản</a>
+                </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <form action="{{ route('logout') }}" method="POST" class="d-inline">
