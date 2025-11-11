@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\CustomerController;
-use App\Http\Controllers\Admin\OrderController as AdminOrderController; // Đặt bí danh cho Admin
+use App\Http\Controllers\Admin\OrderController as AdminOrderController; 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ReviewController; // <-- THÊM CONTROLLER MỚI
 use App\Http\Controllers\Client\AccountController;
 // Import Controller cho Client
 use App\Http\Controllers\Client\HomeController;
@@ -30,6 +32,10 @@ use App\Http\Controllers\Client\ProductController as ClientProductController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/cua-hang', [ClientProductController::class, 'index'])->name('client.shop');
 Route::get('/san-pham/{slug}', [ClientProductController::class, 'detail'])->name('client.product.detail');
+
+// === THÊM ROUTE MỚI ĐỂ LƯU ĐÁNH GIÁ ===
+Route::post('/san-pham/{productId}/review', [ClientProductController::class, 'storeReview'])->name('reviews.store');
+// ======================================
 
 // --- Giỏ hàng (Không cần đăng nhập) ---
 Route::prefix('gio-hang')->name('cart.')->group(function () {
@@ -76,7 +82,7 @@ Route::middleware(['auth'])->group(function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     
     // Dashboard
-    Route::get('/', function () { return view('admin.dashboard'); })->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Quản lý (CRUD)
     Route::resource('categories', CategoryController::class);
@@ -92,5 +98,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/{id}', [CustomerController::class, 'show'])->name('customers.show'); 
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy'); 
+    
+    // === QUẢN LÝ ĐÁNH GIÁ (MỚI) ===
+    Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    // ================================
     
 });
