@@ -6,59 +6,11 @@
     <title>@yield('title', 'Computer Shop')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
+    <link rel="stylesheet" href="{{ asset('css/menu.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/footer.css') }}">
+
     {{-- === (THÊM MỚI) LINK FONT AWESOME ĐỂ HIỂN THỊ ICON === --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
-    <style>
-        /* CSS tùy chỉnh cơ bản */
-        .card-product:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: 0.3s; }
-        .card-product img { height: 200px; object-fit: contain; padding: 10px; }
-
-        /* === (CSS FOOTER ĐÃ "BIẾN TẤU") === */
-        .footer-custom {
-            background-color: #212529; /* Màu bg-dark của Bootstrap */
-            color: #f8f9fa; /* Màu chữ sáng */
-        }
-        .footer-custom h5 {
-            color: #0d6efd; /* Màu xanh (primary) của bạn, thay vì màu trắng/đỏ */
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .footer-custom a, .footer-custom p, .footer-custom li {
-            color: #e9ecef;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        .footer-custom a:hover {
-            color: #ffffff;
-            text-decoration: underline;
-        }
-        .footer-links {
-            list-style: none;
-            padding-left: 0;
-        }
-        .footer-links li {
-            margin-bottom: 8px;
-        }
-        .footer-bottom {
-            background-color: #1a1d20; /* Tối hơn một chút so với bg-dark */
-            padding: 1rem 0;
-            font-size: 0.85rem;
-        }
-        .footer-bottom .hot-tags a {
-            color: #e9ecef;
-            text-decoration: none;
-            padding: 0 5px;
-            border-right: 1px solid #6c757d;
-        }
-        .footer-bottom .hot-tags a:last-child {
-            border-right: none;
-        }
-        .footer-bottom .hot-tags a:hover {
-            text-decoration: underline;
-        }
-    </style>
     @yield('css')
 </head>
 <body>
@@ -79,7 +31,7 @@
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Danh mục</a>
-                        
+
                         {{-- === (ĐÃ SỬA LẠI TOÀN BỘ ID BỊ "LỆCH" THEO 'image_31acc4.png') === --}}
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li>
@@ -139,7 +91,7 @@
                                 </a>
                             </li>
                         </ul>
-                        
+
                     </li>
                     <li class="nav-item"><a class="nav-link" href="#">Liên hệ</a></li>
                 </ul>
@@ -164,7 +116,7 @@
                 @endif
                 <li>
                     <a class="dropdown-item" href="{{ route('client.orders.index') }}">Đơn hàng của tôi</a>
-                </li>                        
+                </li>
                 <li>
                     <a class="dropdown-item" href="{{ route('client.account.index') }}">Tài khoản</a>
                 </li>
@@ -207,7 +159,6 @@
     {{-- === (FOOTER MỚI ĐÃ "BIẾN TẤU") === --}}
     <footer class="footer-custom py-5 mt-5">
         <div class="container">
-            
             <!-- (BIẾN TẤU) Thêm Brand/Tagline -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -215,9 +166,8 @@
                     <p class="text-muted" style="color: #adb5bd !important;">Giải pháp công nghệ toàn diện cho bạn.</p>
                 </div>
             </div>
-            
+
             <div class="row g-4">
-                
                 <!-- Cột 1: Cơ sở 1 (VD: Đống Đa) -->
                 <div class="col-lg-3 col-md-6">
                     <h5>CƠ SỞ 1 - ĐỐNG ĐA, HÀ NỘI</h5>
