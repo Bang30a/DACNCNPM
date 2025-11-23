@@ -5,28 +5,31 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Models\Product; // Cần import Product để trừ kho
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; // Để dùng transaction
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class OrderController extends Controller
 {
     public function index()
-{
-    $cart = session()->get('cart', []);
-    if (count($cart) == 0) {
-        return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống!');
+    {
+        $cart = session()->get('cart', []);
+        if (count($cart) == 0) {
+            return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống!');
+        }
+
+        $total = 0;
+        foreach ($cart as $item) {
+            $total += $item['price'] * $item['quantity'];
+        }
+
+        // Lấy thông tin người dùng đang đăng nhập để điền sẵn vào form
+        $user = auth()->user();
+
+        return view('client.checkout.index', compact('cart', 'total', 'user'));
     }
-
-    $total = 0;
-    foreach ($cart as $item) {
-        $total += $item['price'] * $item['quantity'];
-    }
-
-    // Lấy thông tin người dùng đang đăng nhập để điền sẵn vào form
-    $user = auth()->user();
-
-    return view('client.checkout.index', compact('cart', 'total', 'user'));
-}
 
     public function store(Request $request)
     {
@@ -34,9 +37,15 @@ class OrderController extends Controller
             'customer_name' => 'required',
             'customer_phone' => 'required',
             'shipping_address' => 'required',
+            // Thêm validation cho phương thức thanh toán nếu cần thiết
+            // 'payment_method' => 'required|in:COD,BANK',
         ]);
 
         $cart = session()->get('cart', []);
+        if (empty($cart)) {
+             return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống!');
+        }
+
         $total = 0;
         foreach ($cart as $item) {
             $total += $item['price'] * $item['quantity'];
@@ -55,11 +64,12 @@ class OrderController extends Controller
                 'shipping_address' => $request->shipping_address,
                 'note' => $request->note,
                 'total_amount' => $total,
-                'status' => 0, // Mới đặt
-                'payment_method' => $request->payment_method ?? 'COD'
+                'status' => 0, // Mới đặt (Pending)
+                'payment_method' => $request->payment_method ?? 'COD',
+                'payment_status' => 'Unpaid' // Mặc định chưa thanh toán
             ]);
 
-            // 2. Lưu chi tiết đơn hàng
+            // 2. Lưu chi tiết đơn hàng và trừ kho
             foreach ($cart as $id => $item) {
                 OrderDetail::create([
                     'order_id' => $order->id,
@@ -68,6 +78,12 @@ class OrderController extends Controller
                     'quantity' => $item['quantity'],
                     'price' => $item['price']
                 ]);
+
+                // Trừ kho (Optional: Tùy logic của bạn có muốn trừ ngay không)
+                $product = Product::find($id);
+                if ($product) {
+                    $product->decrement('quantity', $item['quantity']);
+                }
             }
 
             DB::commit(); // Xác nhận lưu vào DB
@@ -75,13 +91,57 @@ class OrderController extends Controller
             // 3. Xóa giỏ hàng sau khi đặt thành công
             session()->forget('cart');
 
-            return redirect()->route('checkout.success')->with('success', 'Đặt hàng thành công! Mã đơn hàng #' . $order->id);
+            // === LOGIC ĐIỀU HƯỚNG ===
+            if ($request->payment_method == 'BANK') {
+                // Nếu chọn chuyển khoản -> Chuyển sang trang QR Code
+                return redirect()->route('checkout.payment', ['orderId' => $order->id]);
+            } else {
+                // Nếu chọn COD -> Chuyển sang trang thành công luôn
+                return redirect()->route('checkout.success')->with('success', 'Đặt hàng thành công! Mã đơn hàng #' . $order->id);
+            }
 
         } catch (\Exception $e) {
             DB::rollBack(); // Nếu lỗi thì hủy hết các thao tác trên
-            return redirect()->back()->with('error', 'Có lỗi xảy ra khi đặt hàng, vui lòng thử lại.');
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi đặt hàng: ' . $e->getMessage());
         }
     }
+
+    // --- 1. Hiển thị trang QR Code (MỚI) ---
+    public function showPaymentQr($orderId)
+    {
+        // Tìm đơn hàng của user hiện tại
+        $order = Order::where('id', $orderId)->where('user_id', Auth::id())->firstOrFail();
+
+        // Nếu đơn đã thanh toán rồi hoặc bị hủy thì không cho vào trang thanh toán nữa
+        // Giả sử status 2 là Đã thanh toán/Hoàn thành, 3 là Hủy (tùy quy ước của bạn)
+        if ($order->payment_status == 'Paid' || $order->status == 3) {
+            return redirect()->route('client.orders.show', $order->id)->with('info', 'Đơn hàng này đã được xử lý.');
+        }
+
+        return view('client.checkout.payment', compact('order'));
+    }
+
+    // --- 2. Xử lý Khách xác nhận đã chuyển khoản (MỚI) ---
+    public function confirmPayment(Request $request, $orderId)
+    {
+        $order = Order::where('id', $orderId)->where('user_id', Auth::id())->firstOrFail();
+
+        $request->validate([
+            'transaction_code' => 'nullable|string|max:50', // Cho phép nhập mã hoặc để trống
+        ]);
+
+        // Cập nhật mã giao dịch vào đơn hàng
+        // Lưu ý: Cần đảm bảo model Order có fillable 'transaction_code'
+        $order->transaction_code = $request->transaction_code;
+        
+        // Có thể đổi trạng thái đơn hàng sang "Chờ duyệt" (ví dụ status = 1) nếu muốn
+        // $order->status = 1; 
+        
+        $order->save();
+
+        return redirect()->route('checkout.success')->with('success', 'Đã gửi xác nhận thanh toán! Chúng tôi sẽ kiểm tra và giao hàng sớm nhất.');
+    }
+
     // Xem lịch sử đơn hàng
     public function history()
     {
@@ -96,11 +156,12 @@ class OrderController extends Controller
         // Tìm đơn hàng theo ID và đảm bảo nó thuộc về user đang đăng nhập
         $order = Order::where('id', $id)
                     ->where('user_id', auth()->id())
-                    ->with('details')
+                    ->with('details') // Eager load details
                     ->firstOrFail();
 
         return view('client.orders.show', compact('order'));
     }
+
     public function success()
     {
         return view('client.checkout.success');

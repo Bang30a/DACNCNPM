@@ -37,6 +37,9 @@
                     </div>
                     <hr class="my-4">
                     <div class="text-center">
+                        Quên mật khẩu? <a href="{{ route('password.request') }}" class="text-decoration-none fw-bold">Đặt lại ngay</a>
+                    </div>
+                    <div class="text-center mt-2">
                         Chưa có tài khoản? <a href="{{ route('register') }}" class="text-decoration-none fw-bold">Đăng ký ngay</a>
                     </div>
                 </form>
