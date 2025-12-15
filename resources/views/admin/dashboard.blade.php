@@ -12,7 +12,6 @@
             <div class="card text-white bg-primary h-100 shadow">
                 <div class="card-body">
                     <h5 class="card-title">Đơn hàng mới</h5>
-                    <!-- Hiển thị dữ liệu động -->
                     <p class="card-text display-6 fw-bold">{{ $newOrders }}</p>
                 </div>
                 <div class="card-footer d-flex align-items-center justify-content-between">
@@ -25,11 +24,10 @@
             <div class="card text-white bg-success h-100 shadow">
                 <div class="card-body">
                     <h5 class="card-title">Tổng doanh thu</h5>
-                    <!-- Hiển thị dữ liệu động (format tiền tệ) -->
                     <p class="card-text display-6 fw-bold">{{ number_format($totalRevenue, 0, ',', '.') }}đ</p>
                 </div>
                 <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a href="{{ route('admin.orders.index', ['status' => 2]) }}" class="text-white text-decoration-none small stretched-link">Xem chi tiết</a>
+                    <a href="{{ route('admin.orders.index', ['status' => 3]) }}" class="text-white text-decoration-none small stretched-link">Xem chi tiết</a>
                     <div class="text-white small"><span data-feather="arrow-right"></span></div>
                 </div>
             </div>
@@ -60,9 +58,9 @@
         </div>
     </div>
 
-    <!-- SỬA LẠI BỐ CỤC BIỂU ĐỒ (CHIA 2 CỘT) -->
+    <!-- BIỂU ĐỒ -->
     <div class="row">
-        <!-- Biểu đồ doanh thu 7 ngày (Cột trái) -->
+        <!-- Biểu đồ doanh thu -->
         <div class="col-lg-7 mb-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header">
@@ -74,7 +72,7 @@
             </div>
         </div>
 
-        <!-- Biểu đồ tròn Trạng thái đơn hàng (Cột phải) -->
+        <!-- Biểu đồ tròn Trạng thái đơn hàng -->
         <div class="col-lg-5 mb-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header">
@@ -88,8 +86,6 @@
             </div>
         </div>
     </div>
-    <!-- KẾT THÚC SỬA BỐ CỤC -->
-
 
     <!-- Đơn hàng mới nhất -->
     <h2 class="h4">Đơn hàng mới nhất</h2>
@@ -113,14 +109,19 @@
                     <td>{{ $order->customer_name }}</td>
                     <td>{{ number_format($order->total_amount, 0, ',', '.') }}đ</td>
                     <td>
+                        {{-- CẬP NHẬT LOGIC HIỂN THỊ 5 TRẠNG THÁI --}}
                         @if($order->status == 0)
-                            <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+                            <span class="badge bg-warning text-dark">Mới đặt</span>
                         @elseif($order->status == 1)
-                            <span class="badge bg-info text-dark">Đang giao</span>
+                            <span class="badge bg-info text-dark">Đang xử lý</span>
                         @elseif($order->status == 2)
-                            <span class="badge bg-success">Đã hoàn thành</span>
-                        @else
+                            <span class="badge bg-primary">Đang giao</span>
+                        @elseif($order->status == 3)
+                            <span class="badge bg-success">Hoàn thành</span>
+                        @elseif($order->status == 4)
                             <span class="badge bg-danger">Đã hủy</span>
+                        @else
+                            <span class="badge bg-secondary">Không rõ</span>
                         @endif
                     </td>
                     <td>
@@ -137,23 +138,16 @@
     </div>
 @endsection
 
-<!-- 
-============================================================
-PHẦN SỬA LỖI NẰM Ở ĐÂY (JAVASCRIPT BỊ THIẾU)
-============================================================
--->
 @section('js')
-    <!-- Thêm thư viện Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Lấy dữ liệu từ PHP truyền sang
+        // Dữ liệu từ Controller
         const chartLabels = @json($chartLabels);
         const chartData = @json($chartData);
-        // Dữ liệu mới cho biểu đồ tròn
         const statusLabels = @json($statusLabels);
         const statusData = @json($statusData);
 
-        // 1. Vẽ Biểu đồ đường (Doanh thu)
+        // 1. Biểu đồ Doanh thu (Line Chart)
         const ctxLine = document.getElementById('revenueChart');
         if (ctxLine) {
             new Chart(ctxLine, {
@@ -174,8 +168,7 @@ PHẦN SỬA LỖI NẰM Ở ĐÂY (JAVASCRIPT BỊ THIẾU)
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                // Format tiền tệ cho trục Y
-                                callback: function(value, index, values) {
+                                callback: function(value) {
                                     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
                                 }
                             }
@@ -185,7 +178,7 @@ PHẦN SỬA LỖI NẰM Ở ĐÂY (JAVASCRIPT BỊ THIẾU)
             });
         }
 
-        // 2. Vẽ Biểu đồ tròn (Trạng thái đơn hàng)
+        // 2. Biểu đồ Trạng thái (Pie Chart) - ĐÃ CẬP NHẬT ĐỦ 5 MÀU
         const ctxPie = document.getElementById('orderStatusChart');
         if (ctxPie) {
             new Chart(ctxPie, {
@@ -196,21 +189,20 @@ PHẦN SỬA LỖI NẰM Ở ĐÂY (JAVASCRIPT BỊ THIẾU)
                         label: 'Số lượng đơn',
                         data: statusData,
                         backgroundColor: [
-                            'rgb(255, 193, 7)',   // Vàng (Chờ xác nhận)
-                            'rgb(13, 202, 240)',  // Xanh lơ (Đang giao)
-                            'rgb(25, 135, 84)',   // Xanh lá (Hoàn thành)
-                            'rgb(220, 53, 69)'    // Đỏ (Đã hủy)
+                            'rgb(255, 193, 7)',   // 0: Mới đặt (Vàng)
+                            'rgb(13, 202, 240)',  // 1: Đang xử lý (Xanh lơ)
+                            'rgb(13, 110, 253)',  // 2: Đang giao (Xanh dương đậm)
+                            'rgb(25, 135, 84)',   // 3: Hoàn thành (Xanh lá)
+                            'rgb(220, 53, 69)'    // 4: Đã hủy (Đỏ)
                         ],
                         hoverOffset: 4
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Tắt duy trì tỷ lệ để vừa khung
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'top',
-                        }
+                        legend: { position: 'top' }
                     }
                 }
             });
