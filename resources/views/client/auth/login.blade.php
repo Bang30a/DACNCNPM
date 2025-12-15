@@ -1,47 +1,105 @@
 @extends('client.layout')
-@section('title', 'Đăng nhập')
+@section('title', 'Đăng nhập & Đăng ký')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card border-0 shadow-lg my-5">
-            <div class="card-body p-5">
-                <div class="text-center mb-4">
-                    <h2 class="fw-bold">Đăng nhập</h2>
-                    <p class="text-muted">Chào mừng bạn quay trở lại!</p>
+<link rel="stylesheet" href="{{ asset('css/auth-style.css') }}">
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+<div class="d-flex justify-content-center align-items-center min-vh-100">
+    <div class="wrapper {{ session('show_register') ? 'active' : '' }}">
+        <span class="rotate-bg"></span>
+        <span class="rotate-bg2"></span>
+
+        {{-- FORM ĐĂNG NHẬP --}}
+        <div class="form-box login">
+            <h2 class="title animation" style="--i:0; --j:21">Đăng nhập</h2>
+
+            @if(session('error'))
+                <div class="alert alert-danger text-center mb-2 animation" style="--i:1; --j:22">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            <form action="{{ route('login') }}" method="POST">
+                @csrf
+                <div class="input-box animation" style="--i:1; --j:22">
+                    {{-- THÊM placeholder=" " VÀO ĐÂY --}}
+                    <input type="email" name="email" value="{{ old('email') }}" required placeholder=" ">
+                    <label>Email</label>
+                    <i class='bx bxs-envelope'></i>
                 </div>
 
-                @if(session('error'))
-                    <div class="alert alert-danger text-center mb-4">
-                        {{ session('error') }}
-                    </div>
-                @endif
+                <div class="input-box animation" style="--i:2; --j:23">
+                    {{-- THÊM placeholder=" " VÀO ĐÂY --}}
+                    <input type="password" name="password" required placeholder=" ">
+                    <label>Mật khẩu</label>
+                    <i class='bx bxs-lock-alt'></i>
+                </div>
 
-                <form action="{{ route('login') }}" method="POST">
-                    @csrf
-                    <div class="form-floating mb-3">
-                        <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" value="{{ old('email') }}" required>
-                        <label for="email">Địa chỉ Email</label>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Mật khẩu" required>
-                        <label for="password">Mật khẩu</label>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="remember" id="remember">
-                        <label class="form-check-label" for="remember">Ghi nhớ đăng nhập</label>
-                    </div>
+                <button type="submit" class="btn btn-auth animation" style="--i:3; --j:24">Đăng nhập</button>
 
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg fw-bold">Đăng nhập</button>
-                    </div>
-                    <hr class="my-4">
-                    <div class="text-center">
-                        Chưa có tài khoản? <a href="{{ route('register') }}" class="text-decoration-none fw-bold">Đăng ký ngay</a>
-                    </div>
-                </form>
-            </div>
+                <div class="linkTxt animation" style="--i:5; --j:25">
+                    <p>Chưa có tài khoản? <a href="#" class="register-link">Đăng ký ngay</a></p>
+                </div>
+            </form>
+        </div>
+
+        <div class="info-text login">
+            <h2 class="animation" style="--i:0; --j:20">Chào mừng trở lại!</h2>
+            <p class="animation" style="--i:1; --j:21">Đăng nhập để tiếp tục mua sắm nhé!</p>
+        </div>
+
+        {{-- FORM ĐĂNG KÝ --}}
+        <div class="form-box register">
+            <h2 class="title animation" style="--i:17; --j:0">Đăng ký</h2>
+
+            <form action="{{ route('register') }}" method="POST">
+                @csrf
+                <div class="input-box animation" style="--i:18; --j:1">
+                    {{-- THÊM placeholder=" " VÀO ĐÂY --}}
+                    <input type="text" name="name" value="{{ old('name') }}" required placeholder=" ">
+                    <label>Họ và tên</label>
+                    <i class='bx bxs-user'></i>
+                    @error('name') <span class="text-danger" style="font-size: 12px; position: absolute; bottom: -20px; left:0">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="input-box animation" style="--i:19; --j:2">
+                    {{-- THÊM placeholder=" " VÀO ĐÂY --}}
+                    <input type="email" name="email" value="{{ old('email') }}" required placeholder=" ">
+                    <label>Email</label>
+                    <i class='bx bxs-envelope'></i>
+                    @error('email') <span class="text-danger" style="font-size: 12px; position: absolute; bottom: -20px; left:0">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="input-box animation" style="--i:20; --j:3">
+                    {{-- THÊM placeholder=" " VÀO ĐÂY --}}
+                    <input type="password" name="password" required placeholder=" ">
+                    <label>Mật khẩu</label>
+                    <i class='bx bxs-lock-alt'></i>
+                    @error('password') <span class="text-danger" style="font-size: 12px; position: absolute; bottom: -20px; left:0">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="input-box animation" style="--i:20; --j:3">
+                    {{-- THÊM placeholder=" " VÀO ĐÂY --}}
+                    <input type="password" name="password_confirmation" required placeholder=" ">
+                    <label>Nhập lại mật khẩu</label>
+                    <i class='bx bxs-lock-alt'></i>
+                </div>
+
+                <button type="submit" class="btn btn-auth animation" style="--i:21;--j:4">Đăng ký</button>
+
+                <div class="linkTxt animation" style="--i:22; --j:5">
+                    <p>Đã có tài khoản? <a href="#" class="login-link">Đăng nhập</a></p>
+                </div>
+            </form>
+        </div>
+
+        <div class="info-text register">
+            <h2 class="animation" style="--i:17; --j:0;">Bạn là người mới?</h2>
+            <p class="animation" style="--i:18; --j:1;">Tạo tài khoản để trải nghiệm mua sắm tốt nhất nhé!</p>
         </div>
     </div>
 </div>
+
+<script src="{{ asset('js/auth-script.js') }}"></script>
 @endsection
