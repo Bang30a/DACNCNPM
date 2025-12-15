@@ -102,6 +102,7 @@
             border-radius: 15px;
             font-size: 0.9rem;
             line-height: 1.4;
+            word-wrap: break-word; /* Tránh tràn chữ */
         }
         .message.user {
             background-color: #0d6efd;
@@ -116,6 +117,11 @@
             align-self: flex-start;
             border-bottom-left-radius: 2px;
         }
+        /* Style cho link trong tin nhắn bot */
+        .message.bot a {
+            color: #0d6efd;
+            text-decoration: underline;
+        }
         .typing-indicator {
             font-size: 0.8rem;
             color: #868e96;
@@ -123,10 +129,73 @@
             display: none;
         }
 
-        /* === CSS CHO FOOTER "BIẾN TẤU" === */
+        /* === CSS CHO THẺ SẢN PHẨM TRONG CHAT === */
+        .chat-product-list {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 5px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .chat-product-card {
+            min-width: 150px;
+            max-width: 150px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-product-img {
+            width: 100%;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 5px;
+        }
+        .chat-product-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 30px;
+        }
+        .chat-product-price {
+            color: #dc3545;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .chat-product-original-price {
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-decoration: line-through;
+            margin-left: 3px;
+        }
+        .chat-product-btn {
+            margin-top: auto;
+            display: block;
+            text-align: center;
+            background: #e7f1ff;
+            color: #0d6efd;
+            text-decoration: none;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .chat-product-btn:hover {
+            background: #0d6efd;
+            color: white;
+        }
+
+        /* === CSS CHO FOOTER === */
         .footer-custom {
-            background-color: #212529; /* Màu tối chuyên nghiệp */
-            color: #adb5bd; /* Màu chữ xám nhẹ */
+            background-color: #212529;
+            color: #adb5bd;
             font-size: 0.9rem;
         }
         .footer-custom h5 {
@@ -134,7 +203,7 @@
             font-weight: 700;
             margin-bottom: 1.2rem;
             font-size: 1.1rem;
-            border-left: 3px solid #0d6efd; /* Điểm nhấn xanh */
+            border-left: 3px solid #0d6efd;
             padding-left: 10px;
         }
         .footer-custom a {
@@ -143,7 +212,7 @@
             transition: color 0.2s;
         }
         .footer-custom a:hover {
-            color: #0d6efd; /* Hover màu xanh */
+            color: #0d6efd;
         }
         .footer-links li {
             margin-bottom: 10px;
@@ -185,7 +254,7 @@
                         <a class="nav-link {{ request()->routeIs('client.shop') ? 'active fw-semibold' : '' }}" href="{{ route('client.shop') }}">Cửa hàng</a>
                     </li>
                     
-                    {{-- MENU DANH MỤC (Đã sửa ID chính xác) --}}
+                    {{-- MENU DANH MỤC --}}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle fw-semibold" href="#" data-bs-toggle="dropdown">Danh mục</a>
                         <ul class="dropdown-menu shadow border-0">
@@ -283,28 +352,25 @@
             </div>
             <div class="typing-indicator ps-3" id="typingIndicator">AI đang soạn tin...</div>
             <div class="chat-footer">
-                <input type="text" id="chatInput" class="form-control" placeholder="Nhập câu hỏi..." onkeypress="handleEnter(event)">
-                <button class="btn btn-primary" onclick="sendMessage()"><i class="bi bi-send-fill"></i></button>
+                <input type="text" id="chatInput" class="form-control" placeholder="Nhập câu hỏi...">
+                <button class="btn btn-primary" id="btnChatSend"><i class="bi bi-send-fill"></i></button>
             </div>
         </div>
     </div>
 
-    {{-- === FOOTER MỚI (Biến tấu) === --}}
+    {{-- === FOOTER === --}}
     <footer class="footer-custom py-5 mt-5">
         <div class="container">
             <div class="row g-4">
-                {{-- Cột 1: Brand --}}
                 <div class="col-lg-3 col-md-6">
                     <h4 class="text-white fw-bold mb-3">COMPUTER SHOP</h4>
-                    <p class="mb-3">Hệ thống bán lẻ máy tính và thiết bị công nghệ uy tín hàng đầu. Cam kết sản phẩm chính hãng, giá tốt nhất thị trường.</p>
+                    <p class="mb-3">Hệ thống bán lẻ máy tính và thiết bị công nghệ uy tín hàng đầu.</p>
                     <div class="d-flex gap-3 mt-3">
                         <a href="#" class="fs-4"><i class="bi bi-facebook"></i></a>
                         <a href="#" class="fs-4"><i class="bi bi-youtube"></i></a>
                         <a href="#" class="fs-4"><i class="bi bi-instagram"></i></a>
                     </div>
                 </div>
-
-                {{-- Cột 2: Liên hệ --}}
                 <div class="col-lg-3 col-md-6">
                     <h5>THÔNG TIN LIÊN HỆ</h5>
                     <ul class="list-unstyled footer-links">
@@ -314,28 +380,25 @@
                         <li><i class="bi bi-clock-fill"></i> Giờ làm việc: 8:00 - 21:00</li>
                     </ul>
                 </div>
-
-                {{-- Cột 3: Hỗ trợ --}}
                 <div class="col-lg-3 col-md-6">
                     <h5>HỖ TRỢ KHÁCH HÀNG</h5>
                     <ul class="list-unstyled footer-links">
-                        <li><a href="#">Hướng dẫn mua hàng online</a></li>
-                        <li><a href="#">Chính sách bảo hành & Đổi trả</a></li>
-                        <li><a href="#">Phương thức thanh toán</a></li>
-                        <li><a href="#">Vận chuyển & Giao nhận</a></li>
-                        <li><a href="#">Tra cứu đơn hàng</a></li>
+                        <li><a href="{{ route('client.shopping_guide') }}">Hướng dẫn mua hàng online</a></li>
+                        <li><a href="{{ route('client.warranty_policy') }}">Chính sách bảo hành & Đổi trả</a></li>
+                        <li><a href="{{ route('client.payment_methods') }}">Phương thức thanh toán</a></li>
+                        <li><a href="{{ route('client.shipping_policy') }}">Vận chuyển & Giao nhận</a></li>
+                        <li><a href="{{ route('client.orders.index') }}">Tra cứu đơn hàng</a></li>
                     </ul>
                 </div>
-
-                {{-- Cột 4: Bản đồ / Đăng ký --}}
-                <div class="col-lg-3 col-md-6">
+                 <div class="col-lg-3 col-md-6">
                     <h5>ĐĂNG KÝ NHẬN TIN</h5>
-                    <p class="small">Nhận thông tin khuyến mãi mới nhất từ chúng tôi.</p>
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Email của bạn">
-                        <button class="btn btn-primary" type="button">Gửi</button>
+                        <input type="email" id="newsletterEmail" class="form-control" placeholder="Email của bạn">
+                        <button class="btn btn-primary" type="button" onclick="subscribeNewsletter()">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
                     </div>
-                    <p class="small text-muted fst-italic">Chúng tôi cam kết bảo mật thông tin của bạn.</p>
+                    <small id="newsletterMessage" class="d-block mt-2"></small>
                 </div>
             </div>
         </div>
@@ -346,43 +409,106 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    {{-- === SCRIPT ĐĂNG KÝ NHẬN TIN === --}}
+    <script>
+        function subscribeNewsletter() {
+            const emailInput = document.getElementById('newsletterEmail');
+            const messageBox = document.getElementById('newsletterMessage');
+            const email = emailInput.value.trim();
+            const btn = event.currentTarget;
+
+            if (!email) {
+                alert('Vui lòng nhập email!');
+                return;
+            }
+
+            const originalIcon = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            btn.disabled = true;
+            messageBox.innerHTML = '';
+
+            fetch('{{ route("newsletter.subscribe") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.innerHTML = originalIcon;
+                btn.disabled = false;
+                if (data.success) {
+                    messageBox.className = 'd-block mt-2 text-success fw-bold';
+                    messageBox.innerText = data.message;
+                    emailInput.value = '';
+                } else {
+                    messageBox.className = 'd-block mt-2 text-danger';
+                    messageBox.innerText = data.message;
+                }
+            })
+            .catch(err => {
+                btn.innerHTML = originalIcon;
+                btn.disabled = false;
+                messageBox.className = 'd-block mt-2 text-danger';
+                messageBox.innerText = 'Lỗi hệ thống. Vui lòng thử lại sau.';
+            });
+        }
+    </script>
+    
     {{-- === SCRIPT CHATBOX === --}}
     <script>
+        function formatAiMessage(message) {
+            if (!message) return '';
+            let formattedText = message.replace(
+                /\[([^\]]+)\]\(([^)]+)\)/g, 
+                '<a href="$2" target="_blank" style="color: #0d6efd; text-decoration: underline; font-weight: 600;">$1</a>'
+            );
+            formattedText = formattedText.replace(/\n/g, '<br>');
+            formattedText = formattedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            return formattedText;
+        }
+
         function toggleChat() {
             const chatWindow = document.getElementById('chatWindow');
             if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
                 chatWindow.style.display = 'flex';
-                // Focus vào ô nhập liệu khi mở
                 setTimeout(() => document.getElementById('chatInput').focus(), 100);
             } else {
                 chatWindow.style.display = 'none';
             }
         }
 
-        function handleEnter(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            const sendButton = document.getElementById('btnChatSend');
+
+            if (sendButton) {
+                sendButton.addEventListener('click', sendMessage);
             }
-        }
+            if (chatInput) {
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+        });
 
         async function sendMessage() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
-            const chatBody = document.getElementById('chatBody');
             const typingIndicator = document.getElementById('typingIndicator');
 
             if (!message) return;
 
-            // 1. Hiển thị tin nhắn của người dùng
             appendMessage(message, 'user');
             input.value = '';
-
-            // 2. Hiển thị "AI đang soạn tin..."
             typingIndicator.style.display = 'block';
-            chatBody.scrollTop = chatBody.scrollHeight; // Cuộn xuống
+            scrollToBottom();
 
             try {
-                // 3. Gửi API đến Laravel
                 const response = await fetch('{{ route("chat.send") }}', {
                     method: 'POST',
                     headers: {
@@ -393,10 +519,15 @@
                 });
 
                 const data = await response.json();
-
-                // 4. Ẩn indicator và hiển thị tin nhắn AI
                 typingIndicator.style.display = 'none';
-                appendMessage(data.reply, 'bot');
+
+                if (data.reply) {
+                    const formattedReply = formatAiMessage(data.reply);
+                    appendMessage(formattedReply, 'bot');
+                }
+                if (data.products && data.products.length > 0) {
+                    renderProductCards(data.products);
+                }
 
             } catch (error) {
                 console.error('Lỗi chat:', error);
@@ -405,16 +536,51 @@
             }
         }
 
-        function appendMessage(text, sender) {
+        function appendMessage(htmlContent, sender) {
             const chatBody = document.getElementById('chatBody');
             const div = document.createElement('div');
             div.classList.add('message', sender);
-            
-            // Chuyển đổi ký tự xuống dòng \n thành thẻ <br> cho đẹp
-            div.innerHTML = text.replace(/\n/g, '<br>');
-            
+            if (sender === 'user') {
+                div.textContent = htmlContent;
+            } else {
+                div.innerHTML = htmlContent;
+            }
             chatBody.appendChild(div);
-            chatBody.scrollTop = chatBody.scrollHeight; // Tự động cuộn xuống
+            scrollToBottom();
+        }
+
+        function renderProductCards(products) {
+            const chatBody = document.getElementById('chatBody');
+            const listDiv = document.createElement('div');
+            listDiv.className = 'chat-product-list';
+
+            products.forEach(product => {
+                const originalPriceHtml = product.originalPrice 
+                    ? `<span class="chat-product-original-price">${product.originalPrice}</span>` 
+                    : '';
+                const imageUrl = product.image ? product.image : 'https://via.placeholder.com/150';
+
+                const cardHtml = `
+                    <div class="chat-product-card">
+                        <img src="${imageUrl}" class="chat-product-img" alt="${product.name}">
+                        <div class="chat-product-name" title="${product.name}">${product.name}</div>
+                        <div class="chat-product-price">
+                            ${product.price}
+                            ${originalPriceHtml}
+                        </div>
+                        <a href="${product.link}" target="_blank" class="chat-product-btn">Xem chi tiết</a>
+                    </div>
+                `;
+                listDiv.innerHTML += cardHtml;
+            });
+
+            chatBody.appendChild(listDiv);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const chatBody = document.getElementById('chatBody');
+            chatBody.scrollTop = chatBody.scrollHeight;
         }
     </script>
 

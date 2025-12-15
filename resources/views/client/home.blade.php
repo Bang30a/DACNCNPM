@@ -21,12 +21,15 @@
     </div>
 
     {{-- 2. SECTION: GIẢM GIÁ SỐC (Luôn hiển thị đầu tiên nếu có) --}}
-    @if($saleProducts->count() > 0)
+    @if(isset($saleProducts) && $saleProducts->count() > 0)
         <div class="mb-5">
             <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
                 <h3 class="fw-bold text-danger m-0"><i class="bi bi-lightning-charge-fill me-2"></i>Đang Giảm Giá Sốc</h3>
-                {{-- Link này dẫn đến trang shop và lọc sp có giá sale (nếu bạn làm chức năng lọc đó), hoặc cứ để về shop chung --}}
-                <a href="{{ route('client.shop') }}" class="text-decoration-none text-danger fw-semibold">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+                
+                {{-- Link dẫn sang trang 'client.sale' --}}
+                <a href="{{ route('client.sale') }}" class="text-decoration-none text-danger fw-semibold">
+                    Xem tất cả <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
             
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
@@ -34,7 +37,10 @@
                     <div class="col">
                         <div class="card h-100 border-0 shadow-sm card-product position-relative">
                             @php
-                                $discount = round((($product->price - $product->sale_price) / $product->price) * 100);
+                                $discount = 0;
+                                if($product->price > 0) {
+                                    $discount = round((($product->price - $product->sale_price) / $product->price) * 100);
+                                }
                             @endphp
                             <span class="position-absolute top-0 start-0 bg-danger text-white badge rounded-pill m-3 shadow-sm">
                                 -{{ $discount }}%
@@ -43,6 +49,8 @@
                             <a href="{{ route('client.product.detail', $product->slug) }}" class="text-center bg-light rounded-top p-3">
                                 @if($product->thumbnail)
                                     <img src="{{ asset('storage/' . $product->thumbnail) }}" class="img-fluid" alt="{{ $product->name }}">
+                                @elseif($product->image_url)
+                                     <img src="{{ $product->image_url }}" class="img-fluid" alt="{{ $product->name }}">
                                 @else
                                     <img src="https://via.placeholder.com/300" class="img-fluid" alt="No Image">
                                 @endif
@@ -76,60 +84,64 @@
     @endif
 
     {{-- 3. VÒNG LẶP CÁC DANH MỤC (Mỗi danh mục 4 sản phẩm) --}}
-    @foreach($categories as $category)
-        <div class="mb-5">
-            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-                <h3 class="fw-bold text-dark m-0">
-                    <i class="bi bi-tag-fill me-2 text-primary"></i>{{ $category->name }}
-                </h3>
-                <a href="{{ route('client.shop', ['category' => $category->id]) }}" class="text-decoration-none fw-semibold">
-                    Xem tất cả {{ $category->name }} <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-            
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-                @foreach($category->products as $product)
-                    <div class="col">
-                        <div class="card h-100 border-0 shadow-sm card-product">
-                            <a href="{{ route('client.product.detail', $product->slug) }}" class="text-center bg-light rounded-top p-3">
-                                @if($product->thumbnail)
-                                    <img src="{{ asset('storage/' . $product->thumbnail) }}" class="img-fluid" alt="{{ $product->name }}">
-                                @else
-                                    <img src="https://via.placeholder.com/300" class="img-fluid" alt="No Image">
-                                @endif
-                            </a>
-                            <div class="card-body d-flex flex-column">
-                                {{-- Tên danh mục nhỏ --}}
-                                <div class="mb-2 text-muted small text-uppercase fw-bold">{{ $category->name }}</div>
-                                
-                                <h6 class="card-title text-truncate mb-3">
-                                    <a href="{{ route('client.product.detail', $product->slug) }}" class="text-dark text-decoration-none" title="{{ $product->name }}">
-                                        {{ $product->name }}
-                                    </a>
-                                </h6>
-                                <div class="mt-auto">
-                                    <div class="mb-3">
-                                        @if($product->sale_price && $product->sale_price < $product->price)
-                                            <span class="fw-bold text-danger fs-5">{{ number_format($product->sale_price) }}đ</span>
-                                            <small class="text-decoration-line-through text-muted ms-2">{{ number_format($product->price) }}đ</small>
-                                        @else
-                                            <span class="fw-bold text-dark fs-5">{{ number_format($product->price) }}đ</span>
-                                        @endif
+    @if(isset($categories))
+        @foreach($categories as $category)
+            <div class="mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+                    <h3 class="fw-bold text-dark m-0">
+                        <i class="bi bi-tag-fill me-2 text-primary"></i>{{ $category->name }}
+                    </h3>
+                    <a href="{{ route('client.shop', ['category' => $category->id]) }}" class="text-decoration-none fw-semibold">
+                        Xem tất cả {{ $category->name }} <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                    @foreach($category->products as $product)
+                        <div class="col">
+                            <div class="card h-100 border-0 shadow-sm card-product">
+                                <a href="{{ route('client.product.detail', $product->slug) }}" class="text-center bg-light rounded-top p-3">
+                                    @if($product->thumbnail)
+                                        <img src="{{ asset('storage/' . $product->thumbnail) }}" class="img-fluid" alt="{{ $product->name }}">
+                                    @elseif($product->image_url)
+                                         <img src="{{ $product->image_url }}" class="img-fluid" alt="{{ $product->name }}">
+                                    @else
+                                        <img src="https://via.placeholder.com/300" class="img-fluid" alt="No Image">
+                                    @endif
+                                </a>
+                                <div class="card-body d-flex flex-column">
+                                    {{-- Tên danh mục nhỏ --}}
+                                    <div class="mb-2 text-muted small text-uppercase fw-bold">{{ $category->name }}</div>
+                                    
+                                    <h6 class="card-title text-truncate mb-3">
+                                        <a href="{{ route('client.product.detail', $product->slug) }}" class="text-dark text-decoration-none" title="{{ $product->name }}">
+                                            {{ $product->name }}
+                                        </a>
+                                    </h6>
+                                    <div class="mt-auto">
+                                        <div class="mb-3">
+                                            @if($product->sale_price && $product->sale_price < $product->price)
+                                                <span class="fw-bold text-danger fs-5">{{ number_format($product->sale_price) }}đ</span>
+                                                <small class="text-decoration-line-through text-muted ms-2">{{ number_format($product->price) }}đ</small>
+                                            @else
+                                                <span class="fw-bold text-dark fs-5">{{ number_format($product->price) }}đ</span>
+                                            @endif
+                                        </div>
+                                        <form action="{{ route('cart.add', $product->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="btn btn-outline-primary w-100 fw-bold">
+                                                <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                                            </button>
+                                        </form>
                                     </div>
-                                    <form action="{{ route('cart.add', $product->id) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="btn btn-outline-primary w-100 fw-bold">
-                                            <i class="bi bi-cart-plus"></i> Thêm vào giỏ
-                                        </button>
-                                    </form>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
-        </div>
-    @endforeach
+        @endforeach
+    @endif
 
     {{-- CSS Animation nhẹ cho ảnh Banner --}}
     <style>

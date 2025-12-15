@@ -135,4 +135,15 @@ class ProductController extends Controller
         // Quay lại trang sản phẩm với thông báo thành công
         return redirect()->back()->with('success', 'Cảm ơn bạn đã đánh giá!');
     }
+     public function sale()
+    {
+        // Lấy các sản phẩm đang bật (status=1) VÀ có giá sale nhỏ hơn giá gốc
+        $products = Product::where('status', 1)
+            ->whereNotNull('sale_price')
+            ->whereColumn('sale_price', '<', 'price') // So sánh 2 cột với nhau
+            ->orderBy('sale_price', 'asc') // Sắp xếp giá rẻ lên trước (hoặc tùy bạn)
+            ->paginate(12); // Phân trang 12 sản phẩm/trang
+
+        return view('client.sale', compact('products'));
+    }
 }

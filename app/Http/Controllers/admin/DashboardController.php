@@ -26,25 +26,26 @@ class DashboardController extends Controller
         }
 
         // --- 4 THẺ THỐNG KÊ (Lọc theo ngày) ---
-        $totalRevenue = Order::where('status', 2) // Chỉ tính đơn "Hoàn thành"
+        // Doanh thu chỉ tính đơn Hoàn thành (Status 3)
+        $totalRevenue = Order::where('status', 3) 
                             ->whereBetween('updated_at', [$startDate->startOfDay(), $endDate->endOfDay()])
                             ->sum('total_amount');
 
-        $newOrders = Order::where('status', 0) // Chỉ tính đơn "Chờ xác nhận"
-                         ->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()])
-                         ->count();
+        $newOrders = Order::where('status', 0) // Chỉ tính đơn "Mới đặt" (Status 0)
+                          ->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()])
+                          ->count();
 
         // Các thống kê tổng (không lọc theo ngày)
         $totalCustomers = User::where('role', 0)->count();
         $totalProducts = Product::count();
 
         // --- BIỂU ĐỒ 1: DOANH THU (Lọc theo ngày) ---
-        // Lấy doanh thu (đơn hoàn thành) theo từng ngày trong khoảng đã chọn
+        // Lấy doanh thu (đơn Hoàn thành - Status 3) theo từng ngày trong khoảng đã chọn
         $revenueData = Order::select(
-                                DB::raw('DATE(updated_at) as date'),
-                                DB::raw('SUM(total_amount) as total')
+                                 DB::raw('DATE(updated_at) as date'),
+                                 DB::raw('SUM(total_amount) as total')
                             )
-                            ->where('status', 2)
+                            ->where('status', 3) // Lọc theo Status 3 (Hoàn thành)
                             ->whereBetween('updated_at', [$startDate->startOfDay(), $endDate->endOfDay()])
                             ->groupBy('date')
                             ->orderBy('date', 'asc')
@@ -74,14 +75,15 @@ class DashboardController extends Controller
                                 return [$item->status => $item->count];
                             });
 
+        // Cập nhật lại 5 trạng thái theo cấu trúc của người dùng (0->4)
         $statusData = [
-            $statusCounts->get(0, 0), // Chờ xác nhận
-            $statusCounts->get(1, 0), // Đang giao
-            $statusCounts->get(2, 0), // Hoàn thành
-            $statusCounts->get(3, 0), // Đã hủy
+            $statusCounts->get(0, 0), // Mới đặt (Pending)
+            $statusCounts->get(1, 0), // Đang xử lý (Processing)
+            $statusCounts->get(2, 0), // Đang giao hàng (Shipping)
+            $statusCounts->get(3, 0), // Hoàn thành (Completed)
+            $statusCounts->get(4, 0), // Đã hủy (Cancelled)
         ];
-        $statusLabels = ['Chờ xác nhận', 'Đang giao', 'Hoàn thành', 'Đã hủy'];
-
+        $statusLabels = ['Mới đặt', 'Đang xử lý', 'Đang giao hàng', 'Hoàn thành', 'Đã hủy']; // Cập nhật nhãn
 
         // --- ĐƠN HÀNG MỚI NHẤT (Lọc theo ngày) ---
         $recentOrders = Order::whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()])

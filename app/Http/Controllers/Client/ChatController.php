@@ -21,23 +21,24 @@ class ChatController extends Controller
         }
 
         try {
+            // --- Chuẩn bị dữ liệu và từ khóa ---
             $msg = Str::lower($userMessage);
             $isSale = Str::contains($msg, ['sale', 'giảm giá', 'khuyến mãi', 'rẻ']);
-            $isBest = Str::contains($msg, ['nhất', 'sâu', 'khủng', 'mạnh', 'top']);
+            $isBest = Str::contains($msg, ['nhất', 'tốt', 'mạnh', 'top', 'khủng']);
             
             $relevantProducts = collect();
             $contextNote = "";
-            $isFallback = false; // Cờ đánh dấu: Có tìm thấy hàng trong kho không?
+            $isFallback = false; 
+            $structuredProducts = [];
 
             // --- 1. LOGIC TÌM KIẾM TRONG KHO ---
-            $stopWords = ['tôi', 'muốn', 'mua', 'cần', 'tìm', 'có', 'không', 'với', 'là', 'của', 'cho', 'giá', 'rẻ', 'tốt', 'nhất', 'shop', 'bên', 'mình', 'em', 'ơi', 'tư', 'vấn', 'biết', 'về', 'thông', 'tin'];
+            $stopWords = ['tôi', 'muốn', 'mua', 'cần', 'tìm', 'có', 'không', 'với', 'là', 'của', 'cho', 'giá', 'rẻ', 'tốt', 'nhất', 'shop', 'bên', 'mình', 'em', 'ơi', 'tư', 'vấn', 'biết', 'về', 'thông', 'tin', 'hiệu', 'năng', 'cấu', 'hình'];
             $keywords = array_filter(explode(' ', $msg), function($w) use ($stopWords) {
                 return !in_array($w, $stopWords) && strlen($w) > 1;
             });
 
             $query = Product::with(['category', 'brand'])->where('status', 1);
             
-            // Nếu hỏi sale, ưu tiên lọc sale
             if ($isSale) {
                 $query->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price');
             }
@@ -46,7 +47,8 @@ class ChatController extends Controller
 
             $scoredProducts = $allProducts->map(function ($product) use ($keywords) {
                 $score = 0;
-                $searchString = Str::lower($product->name . ' ' . ($product->category->name ?? '') . ' ' . ($product->brand->name ?? ''));
+                // Tìm cả trong description để bắt từ khóa kỹ thuật (vd: "i7", "rtx", "ssd")
+                $searchString = Str::lower($product->name . ' ' . strip_tags($product->description) . ' ' . ($product->category->name ?? '') . ' ' . ($product->brand->name ?? ''));
                 foreach ($keywords as $word) {
                     if (str_contains($searchString, $word)) $score++;
                 }
@@ -56,73 +58,104 @@ class ChatController extends Controller
 
             $relevantProducts = $scoredProducts->where('search_score', '>', 0)->sortByDesc('search_score')->take(5);
 
-            // --- 2. XỬ LÝ KHI KHÔNG TÌM THẤY (FALLBACK) ---
+            // --- 2. XỬ LÝ FALLBACK ---
             if ($relevantProducts->isEmpty()) {
-                $isFallback = true; // Đánh dấu là không tìm thấy
-                
-                // Vẫn lấy 3 sản phẩm mới nhất để làm "Gợi ý" (tránh trả về rỗng)
+                $isFallback = true;
                 $relevantProducts = Product::where('status', 1)->latest()->take(3)->get();
-                $contextNote = "Hiện tại kho hàng KHÔNG CÓ sản phẩm khớp chính xác yêu cầu. Dưới đây là danh sách sản phẩm gợi ý thay thế:";
+                $contextNote = "DANH SÁCH GỢI Ý (Không tìm thấy sản phẩm khớp chính xác):";
             } else {
-                $contextNote = "Dưới đây là các sản phẩm có sẵn tại shop phù hợp với yêu cầu:";
+                if ($isBest) {
+                    $relevantProducts = $relevantProducts->sortByDesc('price')->take(5);
+                }
+                $contextNote = "DANH SÁCH SẢN PHẨM KHỚP YÊU CẦU:";
             }
 
-            // --- 3. TẠO CONTEXT ---
-            $productContext = $contextNote . "\n";
+            // --- 3. TẠO CONTEXT (QUAN TRỌNG: Thêm mô tả kỹ thuật & LINK) ---
+            $productContext = ">>> " . $contextNote . "\n";
             foreach ($relevantProducts as $product) {
                 $link = route('client.product.detail', $product->slug);
+                $categoryName = $product->category->name ?? 'Khác';
                 
-                if ($product->sale_price && $product->sale_price < $product->price) {
-                    $priceInfo = number_format($product->sale_price) . "đ";
-                    $status = " [ĐANG SALE]";
+                // Xử lý giá
+                $isProductOnSale = $product->sale_price && $product->sale_price < $product->price;
+                if ($isProductOnSale) {
+                    $displayPrice = number_format($product->sale_price) . "đ";
+                    $originalPrice = number_format($product->price) . "đ";
+                    $priceText = "{$displayPrice} (Gốc: {$originalPrice}) [ĐANG SALE]";
                 } else {
-                    $priceInfo = number_format($product->price) . "đ";
-                    $status = "";
+                    $displayPrice = number_format($product->price) . "đ";
+                    $originalPrice = null;
+                    $priceText = $displayPrice;
                 }
-                $productContext .= "- {$product->name}{$status} | Giá: {$priceInfo} | Link: {$link}\n";
-            }
 
-            // --- 4. TẠO PROMPT THÔNG MINH (QUAN TRỌNG) ---
-            $apiKey = env('GEMINI_API_KEY');
-            
-            if ($isFallback) {
-                // PROMPT KHI KHÔNG CÓ HÀNG: Cho phép AI dùng kiến thức ngoài
-                $prompt = "Bạn là chuyên gia công nghệ của 'Computer Shop'.\n" .
-                          "Khách hỏi: \"$userMessage\"\n\n" .
-                          "Tình trạng kho: Shop hiện KHÔNG CÓ sản phẩm khách hỏi.\n" .
-                          "Danh sách gợi ý thay thế:\n$productContext\n\n" .
-                          "YÊU CẦU TRẢ LỜI:\n" .
-                          "1. Dùng kiến thức của bạn để tư vấn/giải thích về sản phẩm khách hỏi (thông số, có tốt không, ra mắt năm nào...) dù shop không bán.\n" .
-                          "2. Sau đó, khéo léo báo là shop hiện chưa kinh doanh mẫu đó.\n" .
-                          "3. Mời khách tham khảo các sản phẩm gợi ý thay thế trong danh sách trên.\n" .
-                          "4. Giọng điệu: Chuyên gia, khách quan, thân thiện.";
-            } else {
-                // PROMPT KHI CÓ HÀNG: Tập trung bán hàng trong kho
-                $prompt = "Bạn là nhân viên bán hàng của 'Computer Shop'.\n" . 
-                          "Khách hỏi: \"$userMessage\"\n\n" .
-                          "Danh sách sản phẩm có sẵn:\n$productContext\n\n" .
-                          "YÊU CẦU TRẢ LỜI:\n" .
-                          "1. Tư vấn dựa trên danh sách trên.\n" .
-                          "2. Nếu sản phẩm có [ĐANG SALE], hãy nhấn mạnh giá tốt.\n" .
-                          "3. Trả lời ngắn gọn, kèm link mua hàng.";
+                // --- XỬ LÝ MÔ TẢ ---
+                // 1. Loại bỏ thẻ HTML
+                $cleanDesc = strip_tags($product->description); 
+                // 2. Xóa khoảng trắng thừa và xuống dòng
+                $cleanDesc = preg_replace('/\s+/', ' ', $cleanDesc);
+                // 3. Cắt ngắn
+                $shortDesc = Str::limit($cleanDesc, 250);
+
+                // Dữ liệu trả về Frontend
+                $structuredProducts[] = [
+                    'name' => $product->name,
+                    'price' => $displayPrice,
+                    'originalPrice' => $originalPrice,
+                    'link' => $link,
+                    'isSale' => $isProductOnSale,
+                    'category' => $categoryName,
+                    'image' => $product->image_url ?? null
+                ];
+
+                // Context gửi cho AI phân tích - ĐÃ THÊM LINK VÀO ĐÂY
+                $productContext .= "- Tên: {$product->name}\n";
+                $productContext .= "  Giá: {$priceText}\n";
+                $productContext .= "  Link: {$link}\n"; // Cung cấp link cho AI
+                $productContext .= "  Thông số/Mô tả: {$shortDesc}\n";
+                $productContext .= "---\n";
             }
+            $productContext .= ">>> HẾT DANH SÁCH\n";
+
+            // --- 4. PROMPT (Cập nhật logic phân tích hiệu năng & LINK) ---
+            $apiKey = env('GEMINI_API_KEY');
+            $baseInstruction = "Bạn là 'Tech Buddy', chuyên gia máy tính của Computer Shop. Phong cách: Thân thiện, ngắn gọn, súc tích.";
+            
+            // Logic prompt chung
+            $promptLogic = $isFallback 
+                ? "Hiện KHÔNG CÓ đúng sản phẩm khách tìm. Hãy giải thích ngắn gọn về cấu hình khách mong muốn, sau đó giới thiệu các sản phẩm gợi ý bên dưới."
+                : "Dựa vào danh sách sản phẩm bên dưới để tư vấn. Nếu khách hỏi về hiệu năng (mạnh/yếu/chơi game/đồ họa...), hãy PHÂN TÍCH dựa trên phần 'Thông số/Mô tả' (CPU, RAM, Card rời...) của sản phẩm đó.";
+
+            $prompt = $baseInstruction . "\n\n" .
+                      "YÊU CẦU QUAN TRỌNG:\n" .
+                      "1. KHÔNG tự bịa ra sản phẩm không có trong danh sách.\n" .
+                      "2. KHI NHẮC ĐẾN SẢN PHẨM, HÃY CHÈN LINK MUA HÀNG dưới dạng Markdown: [Tên sản phẩm](Link sản phẩm).\n" . // Đã sửa yêu cầu này
+                      "3. Khi đánh giá hiệu năng, hãy nói rõ lý do (ví dụ: 'Con này mạnh vì có chip i7 và card rời...').\n" .
+                      "4. Bạn có thể mời khách bấm vào link trong đoạn chat hoặc xem thẻ sản phẩm bên dưới đều được.\n\n" .
+                      "TÌNH HUỐNG: " . $promptLogic . "\n\n" .
+                      "CÂU HỎI KHÁCH: \"$userMessage\"\n" .
+                      "DỮ LIỆU SẢN PHẨM:\n" . $productContext;
 
             // --- 5. GỌI API ---
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}";
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={$apiKey}";
 
             $response = Http::withoutVerifying()
                 ->withHeaders(['Content-Type' => 'application/json'])
                 ->post($url, ['contents' => [['parts' => [['text' => $prompt]]]]]);
 
             if ($response->successful()) {
-                return response()->json(['reply' => $response->json()['candidates'][0]['content']['parts'][0]['text']]);
+                $replyText = $response->json()['candidates'][0]['content']['parts'][0]['text'];
+                return response()->json([
+                    'reply' => $replyText,
+                    'products' => $structuredProducts, 
+                ]);
             } else {
-                return response()->json(['reply' => 'Hệ thống đang bận chút xíu, bạn đợi lát nhé.']);
+                Log::error('Gemini API Error: ' . $response->body());
+                return response()->json(['reply' => 'Hệ thống đang bận chút xíu, bạn đợi lát nhé. (Lỗi kết nối AI)']);
             }
 
         } catch (\Exception $e) {
             Log::error('Chat Error: ' . $e->getMessage());
-            return response()->json(['reply' => 'Lỗi hệ thống.']);
+            return response()->json(['reply' => 'Lỗi hệ thống. Vui lòng thử lại sau.']);
         }
     }
 }

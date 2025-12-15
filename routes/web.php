@@ -20,6 +20,7 @@ use App\Http\Controllers\Client\OrderController;
 use App\Http\Controllers\Client\ProductController as ClientProductController;
 use App\Http\Controllers\Client\ChatController; 
 use App\Http\Controllers\Client\ForgotPasswordController;
+use App\Http\Controllers\Client\NewsletterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,7 +33,14 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/cua-hang', [ClientProductController::class, 'index'])->name('client.shop');
 Route::get('/san-pham/{slug}', [ClientProductController::class, 'detail'])->name('client.product.detail');
 Route::post('/san-pham/{productId}/review', [ClientProductController::class, 'storeReview'])->name('reviews.store');
-
+// --- Trang sale ---
+Route::get('/khuyen-mai', [ClientProductController::class, 'sale'])->name('client.sale');
+// -- Trang hướng dẫn mua hàng ---
+Route::view('/huong-dan-mua-hang', 'client.pages.shopping_guide')->name('client.shopping_guide');
+Route::view('/chinh-sach-bao-hanh', 'client.pages.warranty_policy')->name('client.warranty_policy');
+Route::view('/phuong-thuc-thanh-toan', 'client.pages.payment_methods')->name('client.payment_methods');
+Route::view('/van-chuyen-giao-nhan', 'client.pages.shipping_policy')->name('client.shipping_policy');
+Route::post('/dang-ky-nhan-tin', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
 // --- (MỚI) Route cho Chatbot AI ---
 Route::post('/chat-ai', [ChatController::class, 'sendMessage'])->name('chat.send');
 
