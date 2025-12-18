@@ -2,12 +2,16 @@
 @section('title', 'Giỏ hàng')
 
 @section('css')
+    @vite(['resources/css/index.css', 'resources/js/app.js'])
     {{-- Import file CSS riêng cho Cart --}}
     <link href="{{ asset('css/client-cart.css') }}" rel="stylesheet">
 @endsection
 
 @section('content')
 <div class="py-4">
+    {{-- 1. THÊM DÒNG NÀY: Khu vực hiển thị thông báo AJAX (Nằm đè lên góc phải) --}}
+    <div id="ajax-alert" class="position-fixed top-0 end-0 p-3" style="z-index: 1060;"></div>
+
     <div class="d-flex align-items-center mb-4">
         <h3 class="fw-bold m-0"><i class="bi bi-cart3 me-2"></i>Giỏ hàng của bạn</h3>
         @if(session('cart'))
@@ -85,11 +89,10 @@
                 </div>
             </div>
 
-            {{-- CỘT PHẢI: TỔNG TIỀN (STICKY) --}}
+            {{-- CỘT PHẢI: TỔNG TIỀN --}}
             <div class="col-lg-4">
                 <div class="summary-card p-4">
                     <h5 class="fw-bold mb-4">Thông tin đơn hàng</h5>
-                    
                     <div class="summary-row">
                         <span>Tạm tính:</span>
                         <span class="fw-bold cart-total">{{ number_format($total) }}đ</span>
@@ -102,14 +105,11 @@
                         <span>Phí vận chuyển:</span>
                         <span>Miễn phí</span>
                     </div>
-
                     <div class="summary-total">
                         <span class="label">Tổng cộng:</span>
                         <span class="value cart-total">{{ number_format($total) }}đ</span>
                     </div>
-                    
                     <small class="text-muted d-block mb-4 mt-2 text-end fst-italic">(Đã bao gồm VAT nếu có)</small>
-
                     <div class="d-grid gap-2">
                         <a href="{{ route('checkout.index') }}" class="btn btn-primary btn-checkout">
                             Tiến hành thanh toán <i class="bi bi-arrow-right ms-2"></i>
@@ -119,7 +119,6 @@
             </div>
         </div>
     @else
-        {{-- GIỎ HÀNG TRỐNG --}}
         <div class="text-center py-5 bg-white rounded-3 shadow-sm">
             <img src="https://cdn-icons-png.flaticon.com/512/11329/11329060.png" alt="Empty Cart" width="150" class="mb-4 opacity-75">
             <h4 class="fw-bold text-dark">Giỏ hàng của bạn đang trống</h4>
@@ -137,25 +136,52 @@
 <script>
     $(document).ready(function() {
         
-        // 1. Xử lý nút Tăng (+)
+        // 2. HÀM HIỂN THỊ THÔNG BÁO (TOAST)
+        function showToast(message, type = 'success') {
+            let icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            let bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            
+            // Tạo HTML cho Toast
+            let html = `
+                <div class="toast align-items-center text-white ${bgClass} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi ${icon} me-2"></i> ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            // Chèn vào div #ajax-alert
+            $('#ajax-alert').html(html);
+            
+            // Tự động ẩn sau 3 giây
+            setTimeout(() => {
+                $('#ajax-alert .toast').removeClass('show');
+                setTimeout(() => { $('#ajax-alert').empty(); }, 500); 
+            }, 3000);
+        }
+
+        // --- Xử lý nút Tăng (+) ---
         $('.btn-increase').click(function() {
             let input = $(this).siblings('.quantity-input');
             let val = parseInt(input.val());
-            input.val(val + 1).trigger('change'); // Tăng giá trị và kích hoạt sự kiện change
+            input.val(val + 1).trigger('change'); 
         });
 
-        // 2. Xử lý nút Giảm (-)
+        // --- Xử lý nút Giảm (-) ---
         $('.btn-decrease').click(function() {
             let input = $(this).siblings('.quantity-input');
             let val = parseInt(input.val());
             if (val > 1) {
-                input.val(val - 1).trigger('change'); // Giảm giá trị và kích hoạt sự kiện change
+                input.val(val - 1).trigger('change'); 
             } else {
-                alert('Số lượng tối thiểu là 1');
+                showToast('Số lượng tối thiểu là 1', 'error'); // Gọi hàm showToast
             }
         });
 
-        // 3. Gọi AJAX khi input thay đổi (kể cả khi bấm nút +/- hoặc nhập tay)
+        // --- AJAX Cập nhật ---
         $(".quantity-input").change(function (e) {
             e.preventDefault();
 
@@ -164,14 +190,12 @@
             var quantity = ele.val();
             var id = tr.attr("data-id");
 
-            // Validate số lượng
             if(quantity < 1) {
-                alert("Số lượng phải lớn hơn 0");
+                showToast("Số lượng phải lớn hơn 0", 'error');
                 ele.val(1);
                 return;
             }
 
-            // Gọi AJAX cập nhật
             $.ajax({
                 url: '{{ route('cart.update') }}',
                 method: "POST",
@@ -182,19 +206,22 @@
                 },
                 success: function (response) {
                     if(response.success) {
-                        // Cập nhật text tiền
+                        // Cập nhật giá tiền
                         tr.find(".item-total").text(response.itemTotal + "đ");
                         $(".cart-total").text(response.cartTotal + "đ");
                         
-                        // Hiệu ứng nháy màu vàng nhẹ để báo hiệu đã update
-                        tr.find(".item-total").css('color', '#d63384').fadeOut(100).fadeIn(100, function() {
-                            $(this).css('color', ''); // Trả lại màu gốc
+                        // Hiệu ứng nháy màu
+                        tr.find(".item-total").css('color', '#dc3545').fadeOut(100).fadeIn(100, function() {
+                            $(this).css('color', ''); 
                         });
+
+                        // 3. GỌI HÀM HIỂN THỊ THÔNG BÁO TẠI ĐÂY
+                        showToast('Đã cập nhật giỏ hàng!');
                     }
                 },
                 error: function(xhr) {
                     console.log(xhr.responseText);
-                    // alert("Có lỗi xảy ra, vui lòng thử lại"); // Có thể comment lại để đỡ phiền nếu lỗi nhỏ
+                    showToast('Lỗi cập nhật, vui lòng thử lại', 'error');
                 }
             });
         });

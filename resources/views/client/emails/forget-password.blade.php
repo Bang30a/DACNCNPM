@@ -15,6 +15,6 @@
     </a>
     
     <p>Nếu bạn không yêu cầu thay đổi mật khẩu, vui lòng bỏ qua email này.</p>
-    <p>Trân trọng,<br>Đội ngũ Computer Shop</p>
+    <p>Trân trọng,<br>Đội ngũ GrabCatPC</p>
 </body>
 </html>

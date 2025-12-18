@@ -60,10 +60,6 @@ class CartController extends Controller
             foreach($cart as $item) {
                 $cartTotal += $item['price'] * $item['quantity'];
             }
-
-            session()->flash('success', 'Đã cập nhật giỏ hàng!');
-            
-            // Trả về JSON để JS xử lý
             return response()->json([
                 'success' => true,
                 'itemTotal' => number_format($itemTotal), // Thành tiền của sp này

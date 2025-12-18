@@ -8,7 +8,7 @@
         </div>
         <h1 class="fw-bold mb-3">Đặt hàng thành công!</h1>
         <p class="lead text-muted mb-5">
-            Cảm ơn bạn đã mua hàng tại Computer Shop.<br>
+            Cảm ơn bạn đã mua hàng tại GrabCatPC.<br>
             Chúng tôi sẽ liên hệ với bạn sớm nhất để xác nhận đơn hàng.
         </p>
         <a href="{{ route('home') }}" class="btn btn-primary btn-lg px-5">

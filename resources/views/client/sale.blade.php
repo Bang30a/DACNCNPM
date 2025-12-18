@@ -1,87 +1,90 @@
-@extends('client.layout') {{-- SỬA LẠI THÀNH client.layout --}}
+@extends('client.layout') 
+@section('title', 'Săn Sale Giá Sốc - GrabCatPC')
 
-@section('title', 'Săn Sale Giá Sốc - Computer Shop')
+{{-- Gọi file CSS riêng --}}
+@section('css')
+    {{-- Nhúng file CSS riêng của trang chủ --}}
+    @vite(['resources/css/index.css', 'resources/js/app.js'])
+@endsection
 
 @section('content')
 <div class="py-4">
+    
     {{-- Banner tiêu đề --}}
-    <div class="p-5 mb-4 bg-danger rounded-3 text-white shadow" 
-         style="background: linear-gradient(45deg, #dc3545, #ff6b6b);">
-        <div class="container-fluid py-3 text-center">
-            <h1 class="display-5 fw-bold"><i class="bi bi-lightning-charge-fill text-warning"></i> KHUYẾN MÃI CỰC SỐC</h1>
-            <p class="col-md-8 fs-5 mx-auto">Săn ngay những deal công nghệ "ngon - bổ - rẻ" nhất trong tháng. Số lượng có hạn!</p>
-        </div>
+    <div class="sale-banner">
+        <h1 class="sale-title"><i class="bi bi-lightning-fill text-warning"></i> SALE SỐC</h1>
+        <p class="sale-desc">Săn ngay những deal công nghệ "ngon - bổ - rẻ" nhất trong tháng. Số lượng có hạn, nhanh tay kẻo lỡ!</p>
     </div>
 
     {{-- Danh sách sản phẩm --}}
-    <div class="row g-4">
+    <div class="container">
         @if($products->count() > 0)
-            @foreach($products as $product)
-                <div class="col-6 col-md-3">
-                    <div class="card card-product h-100 border-0 shadow-sm position-relative">
-                        {{-- Nhãn giảm giá --}}
-                        @php
-                            $discount = 0;
-                            if($product->price > 0) {
-                                $discount = round((($product->price - $product->sale_price) / $product->price) * 100);
-                            }
-                        @endphp
-                        <span class="position-absolute top-0 start-0 badge bg-danger m-3 fs-6">
-                            -{{ $discount }}%
-                        </span>
-
-                        {{-- Hình ảnh --}}
-                        <a href="{{ route('client.product.detail', $product->slug) }}">
-                            @if($product->thumbnail)
-                                <img src="{{ asset('storage/' . $product->thumbnail) }}" class="card-img-top" alt="{{ $product->name }}">
-                            @elseif($product->image_url)
-                                <img src="{{ $product->image_url }}" class="card-img-top" alt="{{ $product->name }}">
-                            @else
-                                <img src="https://via.placeholder.com/300" class="card-img-top" alt="No Image">
-                            @endif
-                        </a>
-
-                        <div class="card-body d-flex flex-column">
-                            {{-- Tên sản phẩm --}}
-                            <h6 class="card-title">
-                                <a href="{{ route('client.product.detail', $product->slug) }}" class="text-decoration-none text-dark fw-bold">
-                                    {{ Str::limit($product->name, 40) }}
-                                </a>
-                            </h6>
-
-                            {{-- Giá cả --}}
-                            <div class="mt-auto">
-                                <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <span class="text-danger fw-bold fs-5">{{ number_format($product->sale_price) }}đ</span>
-                                    <span class="text-muted text-decoration-line-through small">{{ number_format($product->price) }}đ</span>
-                                </div>
-                            </div>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                @foreach($products as $product)
+                    <div class="col">
+                        <div class="card card-sale">
+                            {{-- Tính % giảm giá --}}
+                            @php
+                                $discount = 0;
+                                if($product->price > 0) {
+                                    $discount = round((($product->price - $product->sale_price) / $product->price) * 100);
+                                }
+                            @endphp
                             
-                            {{-- Nút mua --}}
-                            <div class="d-grid mt-3">
+                            {{-- Badge Giảm giá --}}
+                            <span class="discount-badge">-{{ $discount }}%</span>
+
+                            {{-- Hình ảnh --}}
+                            <a href="{{ route('client.product.detail', $product->slug) }}" class="card-sale-img">
+                                @if($product->thumbnail)
+                                    <img src="{{ asset('storage/' . $product->thumbnail) }}" alt="{{ $product->name }}">
+                                @elseif($product->image_url)
+                                    <img src="{{ $product->image_url }}" alt="{{ $product->name }}">
+                                @else
+                                    <img src="https://via.placeholder.com/300" alt="No Image">
+                                @endif
+                            </a>
+
+                            {{-- Nội dung --}}
+                            <div class="card-sale-body">
+                                <a href="{{ route('client.product.detail', $product->slug) }}" class="product-name" title="{{ $product->name }}">
+                                    {{ $product->name }}
+                                </a>
+
+                                <div class="price-wrap">
+                                    <span class="sale-price">{{ number_format($product->sale_price) }}đ</span>
+                                    <span class="original-price">{{ number_format($product->price) }}đ</span>
+                                </div>
+                                
+                                {{-- Nút Mua --}}
                                 <form action="{{ route('cart.add', $product->id) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="btn btn-outline-danger w-100">
-                                        <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                                    {{-- Thêm redirect để ở lại trang này --}}
+                                    <input type="hidden" name="redirect" value="back">
+                                    <button type="submit" class="btn btn-primary btn-buy-now text-white">
+                                        <i class="bi bi-cart-plus-fill me-1"></i> Thêm vào giỏ
                                     </button>
                                 </form>
                             </div>
                         </div>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
+
+            {{-- Phân trang --}}
+            <div class="d-flex justify-content-center mt-5">
+                {{ $products->links('pagination::bootstrap-5') }}
+            </div>
         @else
-            <div class="col-12 text-center py-5">
-                <img src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png" width="100" class="mb-3 opacity-50">
-                <h4 class="text-muted">Hiện chưa có chương trình khuyến mãi nào.</h4>
-                <a href="{{ route('home') }}" class="btn btn-primary mt-2">Quay lại trang chủ</a>
+            <div class="empty-state">
+                <i class="bi bi-emoji-frown"></i>
+                <h4>Hiện chưa có chương trình khuyến mãi nào.</h4>
+                <p>Vui lòng quay lại sau nhé!</p>
+                <a href="{{ route('home') }}" class="btn btn-outline-secondary mt-3 rounded-pill px-4">
+                    <i class="bi bi-arrow-left me-2"></i>Quay lại trang chủ
+                </a>
             </div>
         @endif
-    </div>
-
-    {{-- Phân trang --}}
-    <div class="d-flex justify-content-center mt-5">
-        {{ $products->links('pagination::bootstrap-5') }}
     </div>
 </div>
 @endsection

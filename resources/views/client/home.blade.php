@@ -1,9 +1,9 @@
 @extends('client.layout')
-@section('title', 'Trang chủ - Computer Shop')
+@section('title', 'Trang chủ - GrabCatPC')
 
 @section('css')
     {{-- Nhúng file CSS riêng của trang chủ --}}
-    <link rel="stylesheet" href="{{ asset('css/client-home.css') }}">
+    @vite(['resources/css/index.css', 'resources/js/app.js'])
 @endsection
 
 @section('content')

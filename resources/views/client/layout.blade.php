@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}"> 
-    <title>@yield('title', 'Computer Shop')</title>
-    
+    <title>@yield('title', 'GrabCatPC')</title>
+    <link rel="icon" href="{{ asset('images/logo.png') }}" type="image/png">
     {{-- Thư viện bên ngoài --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -41,8 +41,10 @@
             <div class="container d-flex align-items-center justify-content-between gap-3">
                 
                 {{-- Logo --}}
-                <a class="navbar-brand fw-bold text-primary d-flex align-items-center" href="{{ route('home') }}" style="font-size: 1.8rem;">
-                    <i class="bi bi-pc-display me-2 fs-2"></i> COMPUTER SHOP
+                <a class="navbar-brand d-flex align-items-center" href="{{ route('home') }}">
+                    {{-- Cách 1: Chỉ dùng ảnh logo --}}
+                    <img src="{{ asset('images/logo.png') }}" alt="GrabCatPC Logo" style="height: 50px; width: auto; object-fit: contain;">            
+                <span class="fw-bold text-primary ms-2 fs-3">GrabCatPC</span>
                 </a>
 
                 {{-- Ô Tìm Kiếm (Bo tròn hiện đại) --}}
@@ -228,7 +230,7 @@
         <button class="chat-button" onclick="toggleChat()" title="Chat với AI Tư vấn"><i class="bi bi-chat-dots-fill"></i></button>
         <div class="chat-window" id="chatWindow">
             <div class="chat-header">
-                <span><i class="bi bi-robot me-2"></i> Trợ lý AI Computer Shop</span>
+                <span><i class="bi bi-robot me-2"></i> Trợ lý AI GrabCatPC</span>
                 <button type="button" class="btn-close btn-close-white" onclick="toggleChat()"></button>
             </div>
             <div class="chat-body" id="chatBody">
@@ -250,7 +252,7 @@
         <div class="container">
             <div class="row g-4">
                 <div class="col-lg-3 col-md-6">
-                    <h4 class="text-white fw-bold mb-3">COMPUTER SHOP</h4>
+                    <h4 class="text-white fw-bold mb-3">GrabCatPC</h4>
                     <p class="mb-3">Hệ thống bán lẻ máy tính và thiết bị công nghệ uy tín hàng đầu.</p>
                     <div class="d-flex gap-3 mt-3">
                         <a href="#" class="fs-4"><i class="bi bi-facebook"></i></a>
@@ -289,7 +291,7 @@
         </div>
     </footer>
     <div class="footer-bottom text-center text-secondary py-3">
-        <p class="mb-0">&copy; {{ date('Y') }} Computer Shop. Đồ án tốt nghiệp.</p>
+        <p class="mb-0">&copy; {{ date('Y') }} GrabCatPC. Đồ án tốt nghiệp.</p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
