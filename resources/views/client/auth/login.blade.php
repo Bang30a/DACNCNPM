@@ -92,7 +92,7 @@
                 <button type="submit" class="btn btn-auth animation" style="--i:21;--j:4">Đăng ký</button>
 
                 <div class="linkTxt animation" style="--i:22; --j:5">
-                    <p>Đã có tài khoản? <a href="#" class="login-link">Đăng nhập</a></p>
+                    <p>Đã có tài khoản? <a href="{{ route('login') }}" class="login-link">Đăng nhập</a></p>
                 </div>
             </form>
         </div>
@@ -104,5 +104,5 @@
     </div>
 </div>
 
-<script src="{{ asset('public/js/auth-script.js') }}"></script>
+<script src="{{ asset('js/auth-script.js') }}"></script>
 @endsection

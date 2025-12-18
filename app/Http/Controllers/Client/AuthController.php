@@ -7,22 +7,23 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    // --- ĐĂNG KÝ ---
     public function showRegisterForm()
     {
-        return view('client.auth.register');
+        session()->flash('show_register', true);
+
+        return view('client.auth.login');
     }
 
     public function register(Request $request)
     {
-        // 1. Validate dữ liệu
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed', // confirmed: phải khớp với password_confirmation
+            'password' => 'required|string|min:6|confirmed',
         ], [
             'name.required' => 'Vui lòng nhập họ tên.',
             'email.required' => 'Vui lòng nhập email.',
@@ -33,21 +34,25 @@ class AuthController extends Controller
             'password.confirmed' => 'Mật khẩu nhập lại không khớp.',
         ]);
 
-        // 2. Tạo user mới
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('show_register', true);
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password), // Mã hóa mật khẩu
-            'role' => 0, // Mặc định là khách hàng (0)
+            'password' => Hash::make($request->password),
+            'role' => 0,
         ]);
 
-        // 3. Đăng nhập ngay sau khi đăng ký thành công
         Auth::login($user);
 
         return redirect()->route('home')->with('success', 'Đăng ký tài khoản thành công!');
     }
 
-    // --- ĐĂNG NHẬP ---
     public function showLoginForm()
     {
         return view('client.auth.login');
@@ -55,36 +60,29 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        // 1. Validate dữ liệu cơ bản
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        // 2. Thử đăng nhập
         $credentials = $request->only('email', 'password');
-        $remember = $request->has('remember'); // Kiểm tra checkbox "Ghi nhớ đăng nhập"
+        $remember = $request->has('remember');
 
         if (Auth::attempt($credentials, $remember)) {
-            // Đăng nhập thành công
-            $request->session()->regenerate(); // Bảo mật session
+            $request->session()->regenerate();
 
-            // Kiểm tra role: Nếu là admin (role = 1) thì chuyển vào trang admin dashboard
             if (Auth::user()->role == 1) {
                 return redirect()->route('admin.dashboard');
             }
 
-            // Nếu là khách hàng thì về trang chủ
             return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
         }
 
-        // 3. Đăng nhập thất bại
         return back()->withErrors([
             'email' => 'Email hoặc mật khẩu không chính xác.',
         ])->onlyInput('email');
     }
 
-    // --- ĐĂNG XUẤT ---
     public function logout(Request $request)
     {
         Auth::logout();

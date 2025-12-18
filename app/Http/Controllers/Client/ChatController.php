@@ -89,12 +89,26 @@ class ChatController extends Controller
                 }
 
                 // --- XỬ LÝ MÔ TẢ ---
-                // 1. Loại bỏ thẻ HTML
                 $cleanDesc = strip_tags($product->description); 
-                // 2. Xóa khoảng trắng thừa và xuống dòng
                 $cleanDesc = preg_replace('/\s+/', ' ', $cleanDesc);
-                // 3. Cắt ngắn
                 $shortDesc = Str::limit($cleanDesc, 250);
+
+                // --- XỬ LÝ ẢNH (FIX LỖI ẢNH) ---
+                $imageUrl = 'https://via.placeholder.com/150?text=No+Image'; // Mặc định nếu không có ảnh
+
+                if (!empty($product->thumbnail)) {
+                    // Nếu là link ảnh online (http...)
+                    if (Str::startsWith($product->thumbnail, 'http')) {
+                        $imageUrl = $product->thumbnail;
+                    } else {
+                        // Nếu là ảnh upload: Xóa chữ 'public/' thừa nếu có trong DB để asset() chạy đúng
+                        $cleanPath = Str::replaceFirst('public/', '', $product->thumbnail);
+                        // Tạo đường dẫn đầy đủ: http://domain/storage/path/to/image.jpg
+                        $imageUrl = asset('storage/' . $cleanPath);
+                    }
+                } elseif (!empty($product->image_url)) {
+                    $imageUrl = $product->image_url;
+                }
 
                 // Dữ liệu trả về Frontend
                 $structuredProducts[] = [
@@ -104,32 +118,31 @@ class ChatController extends Controller
                     'link' => $link,
                     'isSale' => $isProductOnSale,
                     'category' => $categoryName,
-                    'image' => $product->image_url ?? null
+                    'image' => $imageUrl // <-- Đã cập nhật ảnh chuẩn
                 ];
 
-                // Context gửi cho AI phân tích - ĐÃ THÊM LINK VÀO ĐÂY
+                // Context gửi cho AI phân tích
                 $productContext .= "- Tên: {$product->name}\n";
                 $productContext .= "  Giá: {$priceText}\n";
-                $productContext .= "  Link: {$link}\n"; // Cung cấp link cho AI
+                $productContext .= "  Link: {$link}\n"; 
                 $productContext .= "  Thông số/Mô tả: {$shortDesc}\n";
                 $productContext .= "---\n";
             }
             $productContext .= ">>> HẾT DANH SÁCH\n";
 
-            // --- 4. PROMPT (Cập nhật logic phân tích hiệu năng & LINK) ---
+            // --- 4. PROMPT ---
             $apiKey = env('GEMINI_API_KEY');
             $baseInstruction = "Bạn là 'Tech Buddy', chuyên gia máy tính của Computer Shop. Phong cách: Thân thiện, ngắn gọn, súc tích.";
             
-            // Logic prompt chung
             $promptLogic = $isFallback 
                 ? "Hiện KHÔNG CÓ đúng sản phẩm khách tìm. Hãy giải thích ngắn gọn về cấu hình khách mong muốn, sau đó giới thiệu các sản phẩm gợi ý bên dưới."
-                : "Dựa vào danh sách sản phẩm bên dưới để tư vấn. Nếu khách hỏi về hiệu năng (mạnh/yếu/chơi game/đồ họa...), hãy PHÂN TÍCH dựa trên phần 'Thông số/Mô tả' (CPU, RAM, Card rời...) của sản phẩm đó.";
+                : "Dựa vào danh sách sản phẩm bên dưới để tư vấn. Nếu khách hỏi về hiệu năng, hãy PHÂN TÍCH dựa trên phần 'Thông số/Mô tả'.";
 
             $prompt = $baseInstruction . "\n\n" .
                       "YÊU CẦU QUAN TRỌNG:\n" .
                       "1. KHÔNG tự bịa ra sản phẩm không có trong danh sách.\n" .
-                      "2. KHI NHẮC ĐẾN SẢN PHẨM, HÃY CHÈN LINK MUA HÀNG dưới dạng Markdown: [Tên sản phẩm](Link sản phẩm).\n" . // Đã sửa yêu cầu này
-                      "3. Khi đánh giá hiệu năng, hãy nói rõ lý do (ví dụ: 'Con này mạnh vì có chip i7 và card rời...').\n" .
+                      "2. KHI NHẮC ĐẾN SẢN PHẨM, HÃY CHÈN LINK MUA HÀNG dưới dạng Markdown: [Tên sản phẩm](Link sản phẩm).\n" .
+                      "3. Khi đánh giá hiệu năng, hãy nói rõ lý do.\n" .
                       "4. Bạn có thể mời khách bấm vào link trong đoạn chat hoặc xem thẻ sản phẩm bên dưới đều được.\n\n" .
                       "TÌNH HUỐNG: " . $promptLogic . "\n\n" .
                       "CÂU HỎI KHÁCH: \"$userMessage\"\n" .

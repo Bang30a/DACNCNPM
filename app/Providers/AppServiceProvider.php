@@ -3,7 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL; // <-- Nhớ thêm dòng này
+use Illuminate\Support\Facades\URL;
+use Illuminate\Pagination\Paginator; // <--- Import thư viện này
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,12 +21,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Ép buộc HTTPS khi chạy trên Production hoặc bất kỳ tên miền nào chứa 'ngrok'
+        // Cấu hình HTTPS
         if($this->app->environment('production') || str_contains(request()->getHost(), 'ngrok')) {
             URL::forceScheme('https');
-            
-            // Đảm bảo các request nội bộ cũng hiểu là đang dùng HTTPS
             $this->app['request']->server->set('HTTPS', 'on');
         }
+
+        // Bắt buộc sử dụng giao diện Bootstrap 5 cho phân trang
+        Paginator::useBootstrapFive(); 
     }
 }

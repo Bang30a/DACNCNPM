@@ -1,0 +1,120 @@
+/* === SLIDESHOW / HERO SECTION === */
+
+/* Gradient nền tối giúp chữ nổi bật */
+.overlay-gradient {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%);
+    z-index: 1;
+}
+
+.carousel-caption {
+    z-index: 2;
+    padding-left: 5rem;
+}
+
+.drop-shadow {
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.object-fit-cover {
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Animation Zoom ảnh nền (Ken Burns Effect) */
+.carousel-item .hero-img {
+    transition: transform 6s ease-in-out;
+    transform: scale(1);
+}
+
+.carousel-item.active .hero-img {
+    transform: scale(1.1); /* Zoom nhẹ khi active */
+}
+
+/* Animation Text bay lên */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.carousel-item.active .animate-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0; /* Ẩn mặc định để chờ animation */
+}
+
+.delay-0 { animation-delay: 0.1s; }
+.delay-1 { animation-delay: 0.3s; }
+.delay-2 { animation-delay: 0.5s; }
+.delay-3 { animation-delay: 0.7s; }
+
+/* Custom Indicators (Dấu chấm điều hướng) */
+.carousel-indicators [data-bs-target] {
+    width: 12px; height: 12px; border-radius: 50%;
+    background-color: rgba(255,255,255,0.5); border: none; margin: 0 6px;
+    transition: all 0.3s ease;
+}
+
+.carousel-indicators .active {
+    width: 30px; border-radius: 10px; background-color: #fff;
+}
+
+/* === UTILITIES & HOVER EFFECTS === */
+
+/* Hover effect cho nút và card */
+.hover-scale {
+    transition: transform 0.2s;
+}
+.hover-scale:hover {
+    transform: translateY(-3px);
+}
+
+/* Hiệu ứng mờ nút prev/next */
+.hover-opacity-100:hover {
+    opacity: 1 !important;
+}
+
+.transition-opacity {
+    transition: opacity 0.3s ease;
+}
+
+.backdrop-blur {
+    backdrop-filter: blur(5px);
+}
+
+/* Cắt dòng văn bản (cho tên sản phẩm) */
+.text-truncate-2 {
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 2.8em; /* Giới hạn chiều cao */
+}
+
+.ls-1 {
+    letter-spacing: 1px;
+}
+
+/* Hiệu ứng zoom ảnh sản phẩm trong list */
+.transition-transform {
+    transition: transform 0.3s ease;
+}
+
+.card-product:hover .transition-transform {
+    transform: scale(1.08);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .carousel-caption {
+        padding-left: 2rem;
+        padding-right: 2rem;
+        bottom: 10% !important;
+    }
+    .display-3 {
+        font-size: 2.5rem;
+    }
+    .carousel-item .hero-img {
+        height: 400px !important;
+    }
+}
